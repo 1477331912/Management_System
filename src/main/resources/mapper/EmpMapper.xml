@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.EmpMapper">
+
+    <select id="pageQuery" resultType="com.example.hello.entity.Emp">
+        select e.id,
+               e.username,
+               e.name,
+               e.gender,
+               e.phone,
+               e.salary,
+               e.dept_id as deptId,
+               d.name as deptName,
+               e.position,
+               e.entry_date as entryDate,
+               e.image,
+               e.create_time as createTime,
+               e.update_time as updateTime
+        from emp e
+                 left join dept d on e.dept_id = d.id
+        <where>
+            <if test="name != null and name != ''">
+                and e.name like concat('%', #{name}, '%')
+            </if>
+            <if test="gender != null">
+                and e.gender = #{gender}
+            </if>
+            <if test="beginDate != null">
+                and e.entry_date <![CDATA[ >= ]]> #{beginDate}
+            </if>
+            <if test="endDate != null">
+                and e.entry_date <![CDATA[ <= ]]> #{endDate}
+            </if>
+        </where>
+        order by e.update_time desc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.Emp">
+        select e.id,
+               e.username,
+               e.password,
+               e.name,
+               e.gender,
+               e.phone,
+               e.salary,
+               e.dept_id as deptId,
+               d.name as deptName,
+               e.position,
+               e.entry_date as entryDate,
+               e.image,
+               e.create_time as createTime,
+               e.update_time as updateTime
+        from emp e
+                 left join dept d on e.dept_id = d.id
+        where e.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into emp(username, password, name, gender, phone, salary, dept_id, position, entry_date, image)
+        values (#{username}, #{password}, #{name}, #{gender}, #{phone}, #{salary}, #{deptId}, #{position}, #{entryDate}, #{image})
+    </insert>
+
+    <update id="update">
+        update emp
+        set username   = #{username},
+            name       = #{name},
+            gender     = #{gender},
+            phone      = #{phone},
+            salary     = #{salary},
+            dept_id    = #{deptId},
+            position   = #{position},
+            entry_date = #{entryDate},
+            image      = #{image}
+        where id = #{id}
+    </update>
+
+    <select id="listAll" resultType="com.example.hello.entity.Emp">
+        select e.id,
+               e.username,
+               e.name,
+               e.gender,
+               e.phone,
+               e.salary,
+               e.dept_id as deptId,
+               d.name as deptName,
+               e.position,
+               e.entry_date as entryDate,
+               e.image,
+               e.create_time as createTime,
+               e.update_time as updateTime
+        from emp e
+                 left join dept d on e.dept_id = d.id
+        order by e.update_time desc
+    </select>
+
+    <delete id="deleteByIds">
+        delete from emp
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
+

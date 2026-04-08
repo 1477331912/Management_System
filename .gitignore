@@ -1,0 +1,26 @@
+# Maven / Java build output
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+logs/
+*.log
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Cursor local config
+.cursor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven wrapper cache (optional)
+.mvn/wrapper/maven-wrapper.jar
+
