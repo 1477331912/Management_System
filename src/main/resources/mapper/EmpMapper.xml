@@ -57,6 +57,17 @@
         where e.id = #{id}
     </select>
 
+    <select id="findByUsernameAndPassword" resultType="com.example.hello.entity.Emp">
+        select id,
+               username,
+               password,
+               name
+        from emp
+        where username = #{username}
+          and password = #{password}
+        limit 1
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into emp(username, password, name, gender, phone, salary, dept_id, position, entry_date, image)
         values (#{username}, #{password}, #{name}, #{gender}, #{phone}, #{salary}, #{deptId}, #{position}, #{entryDate}, #{image})

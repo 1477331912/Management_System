@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +95,18 @@ public class GlobalExceptionHandler {
     public Result<Void> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.warn("参数类型不匹配: {}", ex.getName(), ex);
         return Result.error("参数类型不匹配: " + ex.getName());
+    }
+
+    /**
+     * 处理上传文件超过限制。
+     *
+     * @param ex 异常
+     * @return 失败Result
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<Void> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        log.warn("上传文件大小超出限制: {}", ex.getMessage(), ex);
+        return Result.error("上传文件过大，单文件最大20MB");
     }
 
     /**

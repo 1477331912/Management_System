@@ -83,5 +83,21 @@ public interface DeptMapper {
             where id = #{id}
             """)
     int deleteById(@Param("id") Integer id);
+
+    /**
+     * 批量删除部门。
+     *
+     * @param ids 部门ID列表（非空）
+     * @return 影响行数
+     */
+    @Delete("""
+            <script>
+            delete from dept where id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            </script>
+            """)
+    int deleteByIds(@Param("ids") List<Integer> ids);
 }
 

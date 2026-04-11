@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,6 +95,36 @@ public class DeptController {
     public Result<Void> update(@RequestBody @Valid DeptUpdateDTO req) {
         boolean ok = deptService.update(req.getId(), req.getName());
         return ok ? Result.success() : Result.error("部门不存在");
+    }
+
+    /**
+     * 批量删除部门。
+     * <p>
+     * DELETE /depts/batch?ids=1,2,3
+     *
+     * @param ids 逗号分隔的部门ID，如 {@code 1,2,3}
+     * @return 操作结果
+     */
+    @DeleteMapping("/batch")
+    public Result<Void> batchDelete(@RequestParam("ids") String ids) {
+        if (ids == null || ids.isBlank()) {
+            return Result.error("ids不能为空");
+        }
+        List<Integer> idList;
+        try {
+            idList = Arrays.stream(ids.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .toList();
+        } catch (NumberFormatException e) {
+            return Result.error("ids格式错误");
+        }
+        if (idList.isEmpty()) {
+            return Result.error("ids不能为空");
+        }
+        deptService.batchDelete(idList);
+        return Result.success();
     }
 
     /**

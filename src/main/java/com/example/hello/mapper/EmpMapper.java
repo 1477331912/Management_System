@@ -6,7 +6,6 @@ import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 员工数据访问层。
@@ -18,7 +17,17 @@ public interface EmpMapper {
                         @Param("beginDate") LocalDate beginDate,
                         @Param("endDate") LocalDate endDate);
 
-    Optional<Emp> findById(@Param("id") Integer id);
+    Emp findById(@Param("id") Integer id);
+
+    /**
+     * 根据用户名和加密密码查询员工（登录校验）。
+     *
+     * @param username 用户名
+     * @param password MD5密码
+     * @return 匹配员工
+     */
+    Emp findByUsernameAndPassword(@Param("username") String username,
+                                  @Param("password") String password);
 
     int insert(Emp emp);
 

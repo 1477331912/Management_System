@@ -57,9 +57,8 @@ public class EmpController {
      */
     @GetMapping("/{id}")
     public Result<Emp> getById(@PathVariable @NotNull(message = "id不能为空") Integer id) {
-        return empService.findDetailById(id)
-                .map(Result::success)
-                .orElseGet(() -> Result.error("员工不存在"));
+        Emp emp = empService.findDetailById(id);
+        return emp != null ? Result.success(emp) : Result.error("员工不存在");
     }
 
     /**

@@ -47,5 +47,12 @@ public interface DeptService {
      * @return true=删除成功；false=部门不存在
      */
     boolean delete(Integer id);
+
+    /**
+     * 批量删除部门。
+     *
+     * @param ids 部门ID列表
+     */
+    void batchDelete(List<Integer> ids);
 }
 

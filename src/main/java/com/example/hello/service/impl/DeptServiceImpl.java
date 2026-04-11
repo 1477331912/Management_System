@@ -55,5 +55,14 @@ public class DeptServiceImpl implements DeptService {
     public boolean delete(Integer id) {
         return deptMapper.deleteById(id) > 0;
     }
+
+    @Override
+    @Transactional
+    public void batchDelete(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        deptMapper.deleteByIds(ids);
+    }
 }
 

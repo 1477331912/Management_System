@@ -17,7 +17,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 员工业务实现。
@@ -45,10 +44,12 @@ public class EmpServiceImpl implements EmpService {
     }
 
     @Override
-    public Optional<Emp> findDetailById(Integer id) {
-        Optional<Emp> optionalEmp = empMapper.findById(id);
-        optionalEmp.ifPresent(emp -> emp.setExprList(empExprMapper.findByEmpId(emp.getId())));
-        return optionalEmp;
+    public Emp findDetailById(Integer id) {
+        Emp emp = empMapper.findById(id);
+        if (emp != null) {
+            emp.setExprList(empExprMapper.findByEmpId(emp.getId()));
+        }
+        return emp;
     }
 
     @Override
