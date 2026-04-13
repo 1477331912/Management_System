@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.PetMapper">
+
+    <sql id="petColumns">
+        p.id,
+        p.nickname,
+        p.breed,
+        p.gender,
+        p.birthday,
+        p.weight,
+        p.vaccine_status AS vaccineStatus,
+        p.allergy_history AS allergyHistory,
+        p.image,
+        p.customer_id AS customerId,
+        p.create_time AS createTime,
+        p.update_time AS updateTime
+    </sql>
+
+    <!-- 昵称模糊、品种精确、疫苗状态、客户ID；按最后修改时间倒序；关联客户姓名 -->
+    <select id="pageQuery" resultType="com.example.hello.entity.Pet">
+        select
+        <include refid="petColumns"/>,
+        c.name AS customerName
+        from pet p
+        left join customer c on p.customer_id = c.id
+        <where>
+            <if test="nickname != null and nickname != ''">
+                and p.nickname like concat('%', #{nickname}, '%')
+            </if>
+            <if test="breed != null and breed != ''">
+                and p.breed = #{breed}
+            </if>
+            <if test="vaccineStatus != null">
+                and p.vaccine_status = #{vaccineStatus}
+            </if>
+            <if test="customerId != null">
+                and p.customer_id = #{customerId}
+            </if>
+        </where>
+        order by p.update_time desc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.Pet">
+        select
+        <include refid="petColumns"/>
+        from pet p
+        where p.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into pet (nickname, breed, gender, birthday, weight, vaccine_status, allergy_history, image, customer_id)
+        values (#{nickname}, #{breed}, #{gender}, #{birthday}, #{weight}, #{vaccineStatus}, #{allergyHistory}, #{image}, #{customerId})
+    </insert>
+
+    <update id="update">
+        update pet
+        set nickname        = #{nickname},
+            breed           = #{breed},
+            gender          = #{gender},
+            birthday        = #{birthday},
+            weight          = #{weight},
+            vaccine_status  = #{vaccineStatus},
+            allergy_history = #{allergyHistory},
+            image           = #{image},
+            customer_id     = #{customerId}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from pet where id = #{id}
+    </delete>
+
+</mapper>

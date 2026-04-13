@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  OrderMapper.xml：订单表 SQL 映射。
+  表名 order 为保留字，统一写成 `order`；列 comment 使用反引号避免与方言关键字冲突。
+-->
+<mapper namespace="com.example.hello.mapper.OrderMapper">
+
+    <sql id="orderBaseColumns">
+        o.id,
+        o.order_no AS orderNo,
+        o.customer_id AS customerId,
+        o.pet_id AS petId,
+        o.service_item_id AS serviceItemId,
+        o.emp_id AS empId,
+        o.service_time AS serviceTime,
+        o.duration_minutes AS durationMinutes,
+        o.status AS status,
+        o.rating AS rating,
+        o.`comment` AS comment,
+        o.create_time AS createTime,
+        o.update_time AS updateTime
+    </sql>
+
+    <!-- 8.1：列表联查名称；条件可选；按创建时间倒序 -->
+    <select id="pageQuery" resultType="com.example.hello.entity.BizOrder">
+        select
+        <include refid="orderBaseColumns"/>,
+        c.name AS customerName,
+        p.nickname AS petNickname,
+        si.name AS serviceItemName,
+        e.name AS empName
+        from `order` o
+        left join customer c on o.customer_id = c.id
+        left join pet p on o.pet_id = p.id
+        left join service_item si on o.service_item_id = si.id
+        left join emp e on o.emp_id = e.id
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and o.order_no = #{orderNo}
+            </if>
+            <if test="customerName != null and customerName != ''">
+                and c.name like concat('%', #{customerName}, '%')
+            </if>
+            <if test="petNickname != null and petNickname != ''">
+                and p.nickname like concat('%', #{petNickname}, '%')
+            </if>
+            <if test="status != null">
+                and o.status = #{status}
+            </if>
+            <if test="serviceTimeBegin != null">
+                and o.service_time &gt;= #{serviceTimeBegin}
+            </if>
+            <if test="serviceTimeEnd != null">
+                and o.service_time &lt;= #{serviceTimeEnd}
+            </if>
+        </where>
+        order by o.create_time desc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.BizOrder">
+        select
+        <include refid="orderBaseColumns"/>
+        from `order` o
+        where o.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into `order` (order_no, customer_id, pet_id, service_item_id, emp_id, service_time, duration_minutes, status)
+        values (#{orderNo}, #{customerId}, #{petId}, #{serviceItemId}, #{empId}, #{serviceTime}, #{durationMinutes}, #{status})
+    </insert>
+
+    <update id="update">
+        update `order`
+        set service_time     = #{serviceTime},
+            emp_id           = #{empId},
+            pet_id           = #{petId},
+            service_item_id  = #{serviceItemId},
+            duration_minutes = #{durationMinutes}
+        where id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        update `order`
+        set status = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="updateRating">
+        update `order`
+        set rating   = #{rating},
+            `comment` = #{comment}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from `order` where id = #{id}
+    </delete>
+
+    <!-- 时段重叠：已取消(status=4)不占档 -->
+    <select id="countEmpTimeConflict" resultType="int">
+        select count(1)
+        from `order` o
+        where o.emp_id = #{empId}
+          and o.status != 4
+          and o.service_time &lt; #{rangeEnd}
+          and date_add(o.service_time, interval o.duration_minutes minute) &gt; #{rangeStart}
+        <if test="excludeOrderId != null">
+            and o.id != #{excludeOrderId}
+        </if>
+    </select>
+
+</mapper>

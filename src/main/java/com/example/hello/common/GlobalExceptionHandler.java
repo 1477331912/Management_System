@@ -122,6 +122,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 业务参数不合法（例如关联的客户不存在）。
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result<Void> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("参数错误: {}", ex.getMessage());
+        return Result.error(ex.getMessage());
+    }
+
+    /**
      * 处理数据库访问异常（连接失败、SQL执行异常等）。
      *
      * @param ex 异常

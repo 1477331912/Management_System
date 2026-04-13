@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.CustomerMapper">
+
+    <sql id="customerColumns">
+        id,
+        name,
+        phone,
+        address,
+        member_level AS memberLevel,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <!-- 条件分页：姓名模糊、手机精确、会员等级精确；按最后修改时间倒序 -->
+    <select id="pageQuery" resultType="com.example.hello.entity.Customer">
+        select
+        <include refid="customerColumns"/>
+        from customer
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                and phone = #{phone}
+            </if>
+            <if test="memberLevel != null">
+                and member_level = #{memberLevel}
+            </if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.Customer">
+        select
+        <include refid="customerColumns"/>
+        from customer
+        where id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into customer (name, phone, address, member_level)
+        values (#{name}, #{phone}, #{address}, #{memberLevel})
+    </insert>
+
+    <update id="update">
+        update customer
+        set name         = #{name},
+            phone        = #{phone},
+            address      = #{address},
+            member_level = #{memberLevel}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from customer where id = #{id}
+    </delete>
+
+</mapper>

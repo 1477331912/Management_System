@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.ServiceItemMapper">
+
+    <sql id="itemColumns">
+        s.id,
+        s.name,
+        s.dept_id AS deptId,
+        d.name AS deptName,
+        s.price,
+        s.duration_minutes AS durationMinutes,
+        s.qualification_required AS qualificationRequired,
+        s.create_time AS createTime,
+        s.update_time AS updateTime
+    </sql>
+
+    <!-- 名称模糊、部门筛选；按创建时间倒序 -->
+    <select id="pageQuery" resultType="com.example.hello.entity.ServiceItem">
+        select
+        <include refid="itemColumns"/>
+        from service_item s
+        left join dept d on s.dept_id = d.id
+        <where>
+            <if test="name != null and name != ''">
+                and s.name like concat('%', #{name}, '%')
+            </if>
+            <if test="deptId != null">
+                and s.dept_id = #{deptId}
+            </if>
+        </where>
+        order by s.create_time desc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.ServiceItem">
+        select
+        <include refid="itemColumns"/>
+        from service_item s
+        left join dept d on s.dept_id = d.id
+        where s.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into service_item (name, dept_id, price, duration_minutes, qualification_required)
+        values (#{name}, #{deptId}, #{price}, #{durationMinutes}, #{qualificationRequired})
+    </insert>
+
+    <update id="update">
+        update service_item
+        set name                     = #{name},
+            dept_id                  = #{deptId},
+            price                    = #{price},
+            duration_minutes         = #{durationMinutes},
+            qualification_required   = #{qualificationRequired}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from service_item where id = #{id}
+    </delete>
+
+</mapper>
