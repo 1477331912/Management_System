@@ -33,6 +33,14 @@
         order by s.create_time desc
     </select>
 
+    <select id="listAll" resultType="com.example.hello.entity.ServiceItem">
+        select
+        <include refid="itemColumns"/>
+        from service_item s
+        left join dept d on s.dept_id = d.id
+        order by s.create_time desc
+    </select>
+
     <select id="findById" resultType="com.example.hello.entity.ServiceItem">
         select
         <include refid="itemColumns"/>

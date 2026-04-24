@@ -11,6 +11,7 @@ import java.util.List;
 public interface ServiceItemMapper {
 
     List<ServiceItem> pageQuery(@Param("name") String name, @Param("deptId") Integer deptId);
+    List<ServiceItem> listAll();
 
     ServiceItem findById(@Param("id") Integer id);
 

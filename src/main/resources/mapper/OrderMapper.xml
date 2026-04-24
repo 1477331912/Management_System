@@ -11,15 +11,18 @@
     <sql id="orderBaseColumns">
         o.id,
         o.order_no AS orderNo,
+        o.user_account_id AS userAccountId,
         o.customer_id AS customerId,
         o.pet_id AS petId,
         o.service_item_id AS serviceItemId,
         o.emp_id AS empId,
         o.service_time AS serviceTime,
+        o.service_end_time AS serviceEndTime,
         o.duration_minutes AS durationMinutes,
         o.status AS status,
         o.rating AS rating,
         o.`comment` AS comment,
+        o.cancel_reason AS cancelReason,
         o.create_time AS createTime,
         o.update_time AS updateTime
     </sql>
@@ -68,13 +71,14 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        insert into `order` (order_no, customer_id, pet_id, service_item_id, emp_id, service_time, duration_minutes, status)
-        values (#{orderNo}, #{customerId}, #{petId}, #{serviceItemId}, #{empId}, #{serviceTime}, #{durationMinutes}, #{status})
+        insert into `order` (order_no, user_account_id, customer_id, pet_id, service_item_id, emp_id, service_time, service_end_time, duration_minutes, status)
+        values (#{orderNo}, #{userAccountId}, #{customerId}, #{petId}, #{serviceItemId}, #{empId}, #{serviceTime}, #{serviceEndTime}, #{durationMinutes}, #{status})
     </insert>
 
     <update id="update">
         update `order`
         set service_time     = #{serviceTime},
+            service_end_time = #{serviceEndTime},
             emp_id           = #{empId},
             pet_id           = #{petId},
             service_item_id  = #{serviceItemId},
@@ -88,6 +92,13 @@
         where id = #{id}
     </update>
 
+    <update id="updateCancel">
+        update `order`
+        set status = 4,
+            cancel_reason = #{cancelReason}
+        where id = #{id}
+    </update>
+
     <update id="updateRating">
         update `order`
         set rating   = #{rating},
@@ -98,6 +109,44 @@
     <delete id="deleteById">
         delete from `order` where id = #{id}
     </delete>
+
+    <select id="pageQueryByUser" resultType="com.example.hello.entity.BizOrder">
+        select
+        <include refid="orderBaseColumns"/>,
+        c.name AS customerName,
+        p.nickname AS petNickname,
+        si.name AS serviceItemName,
+        e.name AS empName
+        from `order` o
+        left join customer c on o.customer_id = c.id
+        left join pet p on o.pet_id = p.id
+        left join service_item si on o.service_item_id = si.id
+        left join emp e on o.emp_id = e.id
+        <where>
+            o.user_account_id = #{userAccountId}
+            <if test="orderNo != null and orderNo != ''">
+                and o.order_no = #{orderNo}
+            </if>
+            <if test="status != null">
+                and o.status = #{status}
+            </if>
+            <if test="serviceTimeBegin != null">
+                and o.service_time &gt;= #{serviceTimeBegin}
+            </if>
+            <if test="serviceTimeEnd != null">
+                and o.service_time &lt;= #{serviceTimeEnd}
+            </if>
+        </where>
+        order by o.create_time desc
+    </select>
+
+    <select id="findByIdAndUser" resultType="com.example.hello.entity.BizOrder">
+        select
+        <include refid="orderBaseColumns"/>
+        from `order` o
+        where o.id = #{id}
+          and o.user_account_id = #{userAccountId}
+    </select>
 
     <!-- 时段重叠：已取消(status=4)不占档 -->
     <select id="countEmpTimeConflict" resultType="int">

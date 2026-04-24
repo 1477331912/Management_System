@@ -39,6 +39,11 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     }
 
     @Override
+    public java.util.List<ServiceItem> listAll() {
+        return serviceItemMapper.listAll();
+    }
+
+    @Override
     public ServiceItem findById(Integer id) {
         return serviceItemMapper.findById(id);
     }

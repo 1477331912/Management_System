@@ -14,6 +14,7 @@ import com.example.hello.mapper.EmpMapper;
 import com.example.hello.mapper.OrderMapper;
 import com.example.hello.mapper.PetMapper;
 import com.example.hello.mapper.ServiceItemMapper;
+import com.example.hello.service.EmpScheduleOrderSyncService;
 import com.example.hello.service.OrderService;
 import com.example.hello.vo.OrderCreateResultVO;
 import com.example.hello.vo.OrderCustomerMini;
@@ -58,17 +59,21 @@ public class OrderServiceImpl implements OrderService {
     private final PetMapper petMapper;
     private final ServiceItemMapper serviceItemMapper;
     private final EmpMapper empMapper;
+    /** 管理端建单/改单时同步 {@code emp_schedule.schedule_type}（与 {@link UserAppointmentServiceImpl} 规则一致）。 */
+    private final EmpScheduleOrderSyncService empScheduleOrderSyncService;
 
     public OrderServiceImpl(OrderMapper orderMapper,
                             CustomerMapper customerMapper,
                             PetMapper petMapper,
                             ServiceItemMapper serviceItemMapper,
-                            EmpMapper empMapper) {
+                            EmpMapper empMapper,
+                            EmpScheduleOrderSyncService empScheduleOrderSyncService) {
         this.orderMapper = orderMapper;
         this.customerMapper = customerMapper;
         this.petMapper = petMapper;
         this.serviceItemMapper = serviceItemMapper;
         this.empMapper = empMapper;
+        this.empScheduleOrderSyncService = empScheduleOrderSyncService;
     }
 
     /**
@@ -173,10 +178,13 @@ public class OrderServiceImpl implements OrderService {
         order.setServiceItemId(req.getServiceItemId());
         order.setEmpId(req.getEmpId());
         order.setServiceTime(req.getServiceTime());
+        order.setServiceEndTime(req.getServiceTime().plusMinutes(duration));
         order.setDurationMinutes(duration);
         order.setStatus(1);
 
         insertWithUniqueOrderNo(order);
+        // 订单时段落在某条可预约排班区间内时，将该行标为已被预约
+        empScheduleOrderSyncService.markBooked(order.getEmpId(), order.getServiceTime(), order.getServiceEndTime());
 
         BizOrder saved = orderMapper.findById(order.getId());
         OrderCreateResultVO vo = new OrderCreateResultVO();
@@ -243,14 +251,20 @@ public class OrderServiceImpl implements OrderService {
 
         assertNoTimeConflict(newEmp, newTime, duration, existing.getId());
 
+        // 先恢复旧时段排班，再写入新订单时间并占用新时段排班
+        empScheduleOrderSyncService.releaseBooked(existing.getEmpId(), existing.getServiceTime(), orderServiceEnd(existing));
+
         BizOrder u = new BizOrder();
         u.setId(existing.getId());
         u.setServiceTime(newTime);
+        u.setServiceEndTime(newTime.plusMinutes(duration));
         u.setEmpId(newEmp);
         u.setPetId(newPet);
         u.setServiceItemId(newSi);
         u.setDurationMinutes(duration);
         orderMapper.update(u);
+        // 新订单时段落在可预约排班区间内时 1→5
+        empScheduleOrderSyncService.markBooked(newEmp, newTime, newTime.plusMinutes(duration));
 
         BizOrder out = orderMapper.findById(req.getId());
         if (out != null) {
@@ -319,8 +333,26 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 解析订单结束时刻，与排班释放/同步使用的结束时间一致；无落库字段时用开始时间+时长。
+     *
+     * @param o 当前订单实体
+     * @return 服务结束时间（排班「包含订单区间」判断的右端点）
+     */
+    private static LocalDateTime orderServiceEnd(BizOrder o) {
+        if (o.getServiceEndTime() != null) {
+            return o.getServiceEndTime();
+        }
+        return o.getServiceTime().plusMinutes(o.getDurationMinutes() != null ? o.getDurationMinutes() : 0);
+    }
+
+    /**
      * 冲突判定：新区间 [rangeStart, rangeEnd) 与库中未取消订单区间是否相交。
-     * rangeEnd = rangeStart + durationMinutes。
+     * {@code rangeEnd = rangeStart + durationMinutes}。
+     *
+     * @param empId           服务师
+     * @param rangeStart      区间起点
+     * @param durationMinutes 时长（分钟）
+     * @param excludeOrderId  改单时排除自身订单 id，新建传 {@code null}
      */
     private void assertNoTimeConflict(Integer empId, LocalDateTime rangeStart, int durationMinutes, Integer excludeOrderId) {
         LocalDateTime rangeEnd = rangeStart.plusMinutes(durationMinutes);
@@ -345,7 +377,7 @@ public class OrderServiceImpl implements OrderService {
             return null;
         }
         return switch (status) {
-            case 1 -> "待确认";
+            case 1 -> "已预约";
             case 2 -> "进行中";
             case 3 -> "已完成";
             case 4 -> "已取消";

@@ -106,6 +106,51 @@
         order by e.update_time desc
     </select>
 
+    <select id="listByDeptId" resultType="com.example.hello.entity.Emp">
+        select e.id,
+               e.username,
+               e.name,
+               e.gender,
+               e.phone,
+               e.salary,
+               e.dept_id as deptId,
+               d.name as deptName,
+               e.position,
+               e.entry_date as entryDate,
+               e.image,
+               e.create_time as createTime,
+               e.update_time as updateTime
+        from emp e
+                 left join dept d on e.dept_id = d.id
+        where e.dept_id = #{deptId}
+        order by e.update_time desc
+    </select>
+
+    <select id="listOptionsByDeptId" resultType="com.example.hello.vo.EmpOptionVO">
+        select e.id as empId,
+               e.name as empName,
+               e.dept_id as deptId,
+               d.name as deptName
+        from emp e
+                 left join dept d on e.dept_id = d.id
+        where e.dept_id = #{deptId}
+        order by e.update_time desc
+    </select>
+
+    <select id="listOptionsByDeptIdAndDate" resultType="com.example.hello.vo.EmpOptionVO">
+        select distinct e.id as empId,
+                        e.name as empName,
+                        e.dept_id as deptId,
+                        d.name as deptName
+        from emp e
+                 left join dept d on e.dept_id = d.id
+                 inner join emp_schedule s on s.emp_id = e.id
+        where e.dept_id = #{deptId}
+          and s.work_date = #{workDate}
+          and s.schedule_type = 1
+        order by e.update_time desc
+    </select>
+
     <delete id="deleteByIds">
         delete from emp
         where id in

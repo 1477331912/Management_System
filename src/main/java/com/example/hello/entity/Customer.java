@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Data
 public class Customer {
     private Integer id;
+    /** 关联用户账号ID（逻辑关联 user_account.id） */
+    private Integer userAccountId;
 
     /** 客户姓名，最长 20 字符（与表一致） */
     private String name;

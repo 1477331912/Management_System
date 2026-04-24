@@ -11,6 +11,7 @@ import com.example.hello.vo.PageResultVO;
 public interface ServiceItemService {
 
     PageResultVO<ServiceItem> pageQuery(String name, Integer deptId, Integer page, Integer pageSize);
+    java.util.List<ServiceItem> listAll();
 
     ServiceItem findById(Integer id);
 

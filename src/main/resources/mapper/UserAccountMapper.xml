@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.UserAccountMapper">
+
+    <sql id="userAccountColumns">
+        id,
+        username,
+        phone,
+        password,
+        nickname,
+        avatar,
+        status,
+        last_login_time AS lastLoginTime,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <select id="findById" resultType="com.example.hello.entity.UserAccount">
+        select
+        <include refid="userAccountColumns"/>
+        from user_account
+        where id = #{id}
+    </select>
+
+    <select id="findByUsername" resultType="com.example.hello.entity.UserAccount">
+        select
+        <include refid="userAccountColumns"/>
+        from user_account
+        where username = #{username}
+        limit 1
+    </select>
+
+    <select id="findByPhone" resultType="com.example.hello.entity.UserAccount">
+        select
+        <include refid="userAccountColumns"/>
+        from user_account
+        where phone = #{phone}
+        limit 1
+    </select>
+
+    <select id="findByAccountAndPassword" resultType="com.example.hello.entity.UserAccount">
+        select
+        <include refid="userAccountColumns"/>
+        from user_account
+        where (username = #{account} or phone = #{account})
+          and password = #{password}
+          and status = 1
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into user_account (username, phone, password, nickname, avatar, status)
+        values (#{username}, #{phone}, #{password}, #{nickname}, #{avatar}, #{status})
+    </insert>
+
+    <update id="updateLastLoginTime">
+        update user_account
+        set last_login_time = now()
+        where id = #{id}
+    </update>
+
+    <update id="updatePhoneById">
+        update user_account
+        set phone = #{phone}
+        where id = #{id}
+    </update>
+
+    <update id="updateUsernameAndNicknameById">
+        update user_account
+        set username = #{username},
+            nickname = #{nickname}
+        where id = #{id}
+    </update>
+
+</mapper>

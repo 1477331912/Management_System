@@ -20,6 +20,8 @@ public class BizOrder {
 
     private Integer id;
     private String orderNo;
+    /** 下单用户ID（逻辑关联 user_account.id） */
+    private Integer userAccountId;
     private Integer customerId;
     private Integer petId;
     private Integer serviceItemId;
@@ -29,6 +31,10 @@ public class BizOrder {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime serviceTime;
 
+    /** 预约结束时间（由开始时间 + 时长计算并落库） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime serviceEndTime;
+
     private Integer durationMinutes;
     private Integer status;
     /** 非表字段：由业务层根据 status 转成中文，供列表展示 */
@@ -36,6 +42,8 @@ public class BizOrder {
     private Integer rating;
     /** 对应表字段 comment，MyBatis 映射列名需反引号 */
     private String comment;
+    /** 取消原因（仅 status=4 时通常有值） */
+    private String cancelReason;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createTime;

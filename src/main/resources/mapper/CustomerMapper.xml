@@ -6,6 +6,7 @@
 
     <sql id="customerColumns">
         id,
+        user_account_id AS userAccountId,
         name,
         phone,
         address,
@@ -40,10 +41,30 @@
         where id = #{id}
     </select>
 
+    <select id="findByUserAccountId" resultType="com.example.hello.entity.Customer">
+        select
+        <include refid="customerColumns"/>
+        from customer
+        where user_account_id = #{userAccountId}
+        limit 1
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into customer (name, phone, address, member_level)
         values (#{name}, #{phone}, #{address}, #{memberLevel})
     </insert>
+
+    <update id="bindUserAccount">
+        update customer
+        set user_account_id = #{userAccountId}
+        where id = #{id}
+    </update>
+
+    <update id="unbindByUserAccountId">
+        update customer
+        set user_account_id = null
+        where user_account_id = #{userAccountId}
+    </update>
 
     <update id="update">
         update customer

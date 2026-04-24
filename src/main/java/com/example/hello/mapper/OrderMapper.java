@@ -28,10 +28,17 @@ public interface OrderMapper {
     int update(BizOrder order);
 
     int updateStatus(@Param("id") Integer id, @Param("status") Integer status);
+    int updateCancel(@Param("id") Integer id, @Param("cancelReason") String cancelReason);
 
     int updateRating(@Param("id") Integer id, @Param("rating") Integer rating, @Param("comment") String comment);
 
     int deleteById(@Param("id") Integer id);
+    List<BizOrder> pageQueryByUser(@Param("userAccountId") Integer userAccountId,
+                                   @Param("orderNo") String orderNo,
+                                   @Param("status") Integer status,
+                                   @Param("serviceTimeBegin") LocalDateTime serviceTimeBegin,
+                                   @Param("serviceTimeEnd") LocalDateTime serviceTimeEnd);
+    BizOrder findByIdAndUser(@Param("id") Integer id, @Param("userAccountId") Integer userAccountId);
 
     /**
      * 统计同一服务师在时间段上与 [rangeStart, rangeEnd) 重叠且未取消的订单数。

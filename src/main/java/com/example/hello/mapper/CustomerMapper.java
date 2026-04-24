@@ -15,8 +15,11 @@ public interface CustomerMapper {
                              @Param("memberLevel") Integer memberLevel);
 
     Customer findById(@Param("id") Integer id);
+    Customer findByUserAccountId(@Param("userAccountId") Integer userAccountId);
 
     int insert(Customer customer);
+    int bindUserAccount(@Param("id") Integer id, @Param("userAccountId") Integer userAccountId);
+    int unbindByUserAccountId(@Param("userAccountId") Integer userAccountId);
 
     int update(Customer customer);
 

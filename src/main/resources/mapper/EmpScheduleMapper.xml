@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.hello.mapper.EmpScheduleMapper">
+
+    <sql id="scheduleColumns">
+        s.id,
+        s.emp_id as empId,
+        e.name as empName,
+        e.dept_id as deptId,
+        d.name as deptName,
+        s.work_date as workDate,
+        s.start_time as startTime,
+        s.end_time as endTime,
+        s.schedule_type as scheduleType,
+        s.max_appointments as maxAppointments,
+        s.remark,
+        s.create_time as createTime,
+        s.update_time as updateTime
+    </sql>
+
+    <select id="pageQuery" resultType="com.example.hello.entity.EmpSchedule">
+        select
+        <include refid="scheduleColumns"/>
+        from emp_schedule s
+                 left join emp e on s.emp_id = e.id
+                 left join dept d on e.dept_id = d.id
+        <where>
+            <if test="workDateBegin != null">
+                and s.work_date <![CDATA[ >= ]]> #{workDateBegin}
+            </if>
+            <if test="workDateEnd != null">
+                and s.work_date <![CDATA[ <= ]]> #{workDateEnd}
+            </if>
+            <if test="deptId != null">
+                and e.dept_id = #{deptId}
+            </if>
+            <if test="empId != null">
+                and s.emp_id = #{empId}
+            </if>
+            <if test="scheduleType != null">
+                and s.schedule_type = #{scheduleType}
+            </if>
+        </where>
+        order by s.work_date desc, s.start_time asc
+    </select>
+
+    <select id="findById" resultType="com.example.hello.entity.EmpSchedule">
+        select
+        <include refid="scheduleColumns"/>
+        from emp_schedule s
+                 left join emp e on s.emp_id = e.id
+                 left join dept d on e.dept_id = d.id
+        where s.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into emp_schedule (emp_id, work_date, start_time, end_time, schedule_type, max_appointments, remark)
+        values (#{empId}, #{workDate}, #{startTime}, #{endTime}, #{scheduleType}, #{maxAppointments}, #{remark})
+    </insert>
+
+    <update id="update">
+        update emp_schedule
+        set emp_id           = #{empId},
+            work_date        = #{workDate},
+            start_time       = #{startTime},
+            end_time         = #{endTime},
+            schedule_type    = #{scheduleType},
+            max_appointments = #{maxAppointments},
+            remark           = #{remark}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from emp_schedule
+        where id = #{id}
+    </delete>
+
+    <select id="countTimeOverlap" resultType="int">
+        select count(1)
+        from emp_schedule s
+        where s.emp_id = #{empId}
+          and s.work_date = #{workDate}
+          and s.start_time <![CDATA[ < ]]> #{endTime}
+          and s.end_time <![CDATA[ > ]]> #{startTime}
+        <if test="excludeId != null">
+            and s.id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countActiveOrderInRange" resultType="int">
+        select count(1)
+        from `order` o
+        where o.emp_id = #{empId}
+          and o.status != 4
+          and o.service_time <![CDATA[ < ]]> #{rangeEnd}
+          and date_add(o.service_time, interval o.duration_minutes minute) <![CDATA[ > ]]> #{rangeStart}
+    </select>
+
+    <select id="calendar" resultType="com.example.hello.entity.EmpSchedule">
+        select
+        <include refid="scheduleColumns"/>
+        from emp_schedule s
+                 left join emp e on s.emp_id = e.id
+                 left join dept d on e.dept_id = d.id
+        where s.work_date = #{workDate}
+        <if test="deptId != null">
+            and e.dept_id = #{deptId}
+        </if>
+        <if test="empId != null">
+            and s.emp_id = #{empId}
+        </if>
+        order by s.start_time asc
+    </select>
+
+    <select id="listAvailableSchedules" resultType="com.example.hello.entity.EmpSchedule">
+        select s.id,
+               s.emp_id as empId,
+               e.name as empName,
+               s.work_date as workDate,
+               s.start_time as startTime,
+               s.end_time as endTime,
+               s.schedule_type as scheduleType,
+               s.max_appointments as maxAppointments,
+               s.remark
+        from emp_schedule s
+                 left join emp e on s.emp_id = e.id
+        where s.work_date = #{workDate}
+          and s.schedule_type = 1
+        <if test="empId != null">
+            and s.emp_id = #{empId}
+        </if>
+        order by s.start_time asc
+    </select>
+
+    <select id="listAvailableSchedulesByEmpIds" resultType="com.example.hello.entity.EmpSchedule">
+        select s.id,
+               s.emp_id as empId,
+               e.name as empName,
+               s.work_date as workDate,
+               s.start_time as startTime,
+               s.end_time as endTime,
+               s.schedule_type as scheduleType,
+               s.max_appointments as maxAppointments,
+               s.remark
+        from emp_schedule s
+                 left join emp e on s.emp_id = e.id
+        where s.work_date = #{workDate}
+          and s.schedule_type = 1
+          and s.emp_id in
+        <foreach collection="empIds" item="empId" open="(" separator="," close=")">
+            #{empId}
+        </foreach>
+        order by s.start_time asc
+    </select>
+
+    <!--
+      订单区间 [rangeStart, rangeEnd] 被排班区间包含时：start_time <= rangeStart and end_time >= rangeEnd。
+      多行同时包含时只更新「跨度最短」的一行（与预约释放时成对）。
+    -->
+    <update id="updateToBookedContained">
+        update emp_schedule
+        set schedule_type = 5
+        where emp_id = #{empId}
+          and work_date = #{workDate}
+          and schedule_type = 1
+          and start_time <![CDATA[ <= ]]> #{rangeStart}
+          and end_time <![CDATA[ >= ]]> #{rangeEnd}
+        order by timestampdiff(second, start_time, end_time) asc
+        limit 1
+    </update>
+
+    <!-- 取消/改期：在包含订单时段的已被预约行中，同样优先最短跨度的一行改回可预约(1)。 -->
+    <update id="updateToBookableContained">
+        update emp_schedule
+        set schedule_type = 1
+        where emp_id = #{empId}
+          and work_date = #{workDate}
+          and schedule_type = 5
+          and start_time <![CDATA[ <= ]]> #{rangeStart}
+          and end_time <![CDATA[ >= ]]> #{rangeEnd}
+        order by timestampdiff(second, start_time, end_time) asc
+        limit 1
+    </update>
+
+</mapper>
